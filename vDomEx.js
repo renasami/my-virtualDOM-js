@@ -14,7 +14,7 @@ var vDomEx = {
 const app = document.getElementById('app');
 
 const p = document.createElement('h2');
-p.innerText = 'ラーメンが食べたい';
+p.innerText = 'ラーメン食べたい';
 
 app.appendChild(p);
 
