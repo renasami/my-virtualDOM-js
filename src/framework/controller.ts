@@ -1,84 +1,90 @@
-import { ActionTree } from "./action";
-import { View, VNode, createElement, updateElement } from "./view";
+import { View, VNode, updateElement, createElement } from './view'
+import { ActionTree } from './action'
 
-interface AppConstructor<State, Actions> {
-  /** 親ノード */
-  el: HTMLElement | string;
+interface AppConstructor<State, Actions extends ActionTree<State>> {
+  /** メインNode */
+  el: Element | string
   /** Viewの定義 */
-  view: View<State, ActionTree<State>>;
+  view: View<State, Actions>
   /** 状態管理 */
-  state: State;
+  state: State
   /** Actionの定義 */
-  actions: ActionTree<State>;
+  actions: Actions
 }
 
-export class App<State, Actions> {
-  private readonly el: HTMLElement;
-  private readonly view: View<State, ActionTree<State>>;
-  private readonly state: State;
-  private readonly actions: ActionTree<State>;
-  private oldNode: VNode;
-  private newNode: VNode;
-  private skipRender: boolean;
+export class App<State, Actions extends ActionTree<State>> {
+  private readonly el: Element
+  private readonly view: AppConstructor<State, Actions>['view']
+  private readonly state: AppConstructor<State, Actions>['state']
+  private readonly actions: AppConstructor<State, Actions>['actions']
+
+  /** 仮想DOM（変更前用） */
+  private oldNode: VNode
+  /** 仮想DOM（変更後用） */
+  private newNode: VNode
+
+  /** 連続でリアルDOM操作が走らないためのフラグ */
+  private skipRender: boolean
 
   constructor(params: AppConstructor<State, Actions>) {
-    this.el =
-      typeof params.el === "string"
-        ? document.querySelector(params.el)
-        : params.el;
-
-    this.view = params.view;
-    this.state = params.state;
-    this.actions = this.dispatchAction(params.actions);
-    this.resolveNode();
+    this.el = typeof params.el === 'string' ? document.querySelector(params.el) : params.el
+    this.view = params.view
+    this.state = params.state
+    this.actions = this.dispatchAction(params.actions)
+    this.resolveNode()
   }
 
   /**
-   * ActionにStateを渡し、新しい仮想DOMを作る
+   * ユーザが定義したActionsに仮想DOM再構築用のフックを仕込む
+   * @param actions
    */
-  private dispatchAction(actions: ActionTree<State>) {
-    const dispatched = {} as ActionTree<State>;
-    for (let key in actions) {
-      const action = actions[key];
-      dispatched[key] = (state: State, ...data: any) => {
-        const ret = action(state, ...data);
-        this.resolveNode();
-        return ret;
-      };
+  private dispatchAction(actions: Actions): Actions {
+    const dispatched: ActionTree<State> = {}
+
+    for (const key in actions) {
+      const action = actions[key]
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      dispatched[key] = (state: State, ...data: any): any => {
+        const ret = action(state, ...data)
+        this.resolveNode()
+        return ret
+      }
     }
-    return dispatched;
+
+    return dispatched as Actions
   }
 
   /**
-   * 仮想DOMを再構築する
+   * 仮想DOMを構築する
    */
-  private resolveNode() {
-    this.newNode = this.view(this.state, this.actions);
-    this.scheduleRender();
+  private resolveNode(): void {
+    // 仮想DOMを再構築する
+    this.newNode = this.view(this.state, this.actions)
+    this.scheduleRender()
   }
 
   /**
-   * レンダリングのスケジューリングを行う
-   * （連続でActionが実行されたときに、何度もDOMツリーを書き換えないため）
+   * renderのスケジューリングを行う
    */
-  private scheduleRender() {
+  private scheduleRender(): void {
     if (!this.skipRender) {
-      this.skipRender = true;
-      setTimeout(this.render.bind(this));
+      this.skipRender = true
+      // setTimeoutを使うことで非同期になり、かつ実行を数ミリ秒遅延できる
+      setTimeout(this.render.bind(this))
     }
   }
 
   /**
-   * 描画処理
+   * リアルDOMに反映する
    */
   private render(): void {
     if (this.oldNode) {
-      updateElement(this.el, this.oldNode, this.newNode);
+      updateElement(this.el as HTMLElement, this.oldNode, this.newNode)
     } else {
-      this.el.appendChild(createElement(this.newNode));
+      this.el.appendChild(createElement(this.newNode))
     }
 
-    this.oldNode = this.newNode;
-    this.skipRender = false;
+    this.oldNode = this.newNode
+    this.skipRender = false
   }
 }
