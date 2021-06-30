@@ -3,14 +3,14 @@ type NodeType = VNode | string | number
 /** 属性の型 */
 type AttributeType = string | EventListener
 type Attributes = {
-  [attr: string]: AttributeType
+  [attr: string]: AttributeType 
 }
 
 /**
  * 仮想DOMのひとつのオブジェクトを表す型
  */
 export type VNode = {
-  nodeName: keyof ElementTagNameMap
+  nodeName: keyof HTMLElementTagNameMap
   attributes: Attributes
   children: NodeType[]
 }
