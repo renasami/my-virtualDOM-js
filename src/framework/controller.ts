@@ -18,12 +18,9 @@ export class App<State, Actions extends ActionTree<State>> {
   private readonly state: AppConstructor<State, Actions>['state']
   private readonly actions: AppConstructor<State, Actions>['actions']
 
-  /** 仮想DOM（変更前用） */
   private oldNode: VNode
-  /** 仮想DOM（変更後用） */
   private newNode: VNode
 
-  /** 連続でリアルDOM操作が走らないためのフラグ */
   private skipRender: boolean
 
   constructor(params: AppConstructor<State, Actions>) {
@@ -43,7 +40,6 @@ export class App<State, Actions extends ActionTree<State>> {
 
     for (const key in actions) {
       const action = actions[key]
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       dispatched[key] = (state: State, ...data: any): any => {
         const ret = action(state, ...data)
         this.resolveNode()
@@ -58,7 +54,6 @@ export class App<State, Actions extends ActionTree<State>> {
    * 仮想DOMを構築する
    */
   private resolveNode(): void {
-    // 仮想DOMを再構築する
     this.newNode = this.view(this.state, this.actions)
     this.scheduleRender()
   }
@@ -69,7 +64,6 @@ export class App<State, Actions extends ActionTree<State>> {
   private scheduleRender(): void {
     if (!this.skipRender) {
       this.skipRender = true
-      // setTimeoutを使うことで非同期になり、かつ実行を数ミリ秒遅延できる
       setTimeout(this.render.bind(this))
     }
   }

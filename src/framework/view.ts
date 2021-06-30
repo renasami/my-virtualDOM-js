@@ -1,23 +1,18 @@
-/** Nodeが取りうる3種の型 */
+
 type NodeType = VNode | string | number
-/** 属性の型 */
 type AttributeType = string | EventListener
 type Attributes = {
   [attr: string]: AttributeType 
 }
 
-/**
- * 仮想DOMのひとつのオブジェクトを表す型
- */
+
 export type VNode = {
   nodeName: keyof HTMLElementTagNameMap
   attributes: Attributes
   children: NodeType[]
 }
 
-/**
- * Nodeを受け取り、VNodeなのかTextなのかを判定する
- */
+
 const isVNode = (node: NodeType): node is VNode => {
   return typeof node !== 'string' && typeof node !== 'number'
 }
@@ -39,7 +34,7 @@ export interface View<State, Actions> {
 }
 
 /**
- * 仮想DOMを作成する
+ * 仮想DOMの作成
  * @param nodeName Nodeの名前（HTMLのタグ名）
  * @param attributes Nodeの属性（width/heightやstyleなど）
  * @param children Nodeの子要素のリスト
@@ -60,12 +55,9 @@ export function h(nodeName: VNode['nodeName'], attributes: VNode['attributes'], 
 const setAttributes = (target: HTMLElement, attributes: Attributes): void => {
   for (const attr in attributes) {
     if (isEventAttr(attr)) {
-      // onclickなどはイベントリスナーに登録する
-      // onclickやoninput、onchangeなどのonを除いたイベント名を取得する
       const eventName = attr.slice(2)
       target.addEventListener(eventName, attributes[attr] as EventListener)
     } else {
-      // イベントリスナ−以外はそのまま属性に設定する
       target.setAttribute(attr, attributes[attr] as string)
     }
   }
@@ -78,7 +70,6 @@ const setAttributes = (target: HTMLElement, attributes: Attributes): void => {
  * @param newAttrs 新しい属性
  */
 const updateAttributes = (target: HTMLElement, oldAttrs: Attributes, newAttrs: Attributes): void => {
-  // 処理をシンプルにするためoldAttrsを削除後、newAttrsで再設定する
   for (const attr in oldAttrs) {
     if (!isEventAttr(attr)) {
       target.removeAttribute(attr)
@@ -101,19 +92,12 @@ const updateValue = (target: HTMLInputElement, newValue: string): void => {
   target.value = newValue
 }
 
-/** 差分のタイプ */
 enum ChangedType {
-  /** 差分なし */
   None,
-  /** NodeTypeが異なる */
   Type,
-  /** テキストNodeが異なる */
   Text,
-  /** 要素名が異なる */
   Node,
-  /** value属性が異なる（input要素用） */
   Value,
-  /** 属性が異なる */
   Attr
 }
 /**
@@ -140,8 +124,6 @@ const hasChanged = (a: NodeType, b: NodeType): ChangedType => {
     }
 
     if (JSON.stringify(a.attributes) !== JSON.stringify(b.attributes)) {
-      // 本来ならオブジェクトひとつひとつを比較すべきなのですが、シンプルな実装にするためにJSON.stringifyを使っています
-      // JSON.stringifyを使ったオブジェクトの比較は罠が多いので、できるだけ使わないほうが良いです
       return ChangedType.Attr
     }
   }
@@ -173,20 +155,18 @@ export function createElement(node: NodeType): HTMLElement | Text {
  * @param index 子要素の順番
  */
 export function updateElement(parent: HTMLElement, oldNode: NodeType, newNode: NodeType, index = 0): void {
-  // oldNodeがない場合は新しいNodeを作成する
   if (!oldNode) {
     parent.appendChild(createElement(newNode))
     return
   }
 
-  // newNodeがない場合は削除されたと判断し、そのNodeを削除する
+
   const target = parent.childNodes[index]
   if (!newNode) {
     parent.removeChild(target)
     return
   }
 
-  // 差分検知し、パッチ処理（変更箇所だけ反映）を行う
   const changeType = hasChanged(oldNode, newNode)
   switch (changeType) {
     case ChangedType.Type:
@@ -202,7 +182,6 @@ export function updateElement(parent: HTMLElement, oldNode: NodeType, newNode: N
       return
   }
 
-  // 子要素の差分検知・リアルDOM反映を再帰的に実行する
   if (isVNode(oldNode) && isVNode(newNode)) {
     for (let i = 0; i < newNode.children.length || i < oldNode.children.length; i++) {
       updateElement(target as HTMLElement, oldNode.children[i], newNode.children[i], i)
