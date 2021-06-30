@@ -20,7 +20,6 @@ const actions: ActionTree <State>= {
     }
     state.n = 0
     state.imgs.push(state.img[state.n])
-    console.log(state.imgs)
     return
   }
 };
