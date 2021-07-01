@@ -20,8 +20,7 @@ export class App<State, Actions extends ActionTree<State>> {
 
   private oldNode: VNode
   private newNode: VNode
-
-  private skipRender: boolean
+  private skipRender: boolean //差分検知における評価用
 
   constructor(params: AppConstructor<State, Actions>) {
     this.el = typeof params.el === 'string' ? document.querySelector(params.el) : params.el
@@ -64,7 +63,7 @@ export class App<State, Actions extends ActionTree<State>> {
   private scheduleRender(): void {
     if (!this.skipRender) {
       this.skipRender = true
-      setTimeout(this.render.bind(this))
+      setTimeout(this.render.bind(this))//再帰的な処理
     }
   }
 
