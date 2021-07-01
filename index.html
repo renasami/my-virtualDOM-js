@@ -14,7 +14,29 @@
   </head>
 
   <body>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
     <div id="app"></div>
+    <div id="app2">
+      <button v-on:click="countup">vue</button>
+      <ul style="list-style-type: none">
+        <li v-for="item in countLis">{{ item }}</li>
+      </ul>
+    </div>
     <script src="dist/index.js"></script>
+    <script>
+			new Vue({
+				el: '#app2',
+				data: {
+					count: 0,
+          countLis: []
+				},
+				methods: {
+					countup: function() {
+						this.count+=1;
+            this.countLis.push(this.count)
+					}
+				}
+			})
+    </script>
   </body>
 </html>
