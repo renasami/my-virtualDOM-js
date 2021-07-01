@@ -32,8 +32,14 @@
 				},
 				methods: {
 					countup: function() {
-						this.count+=1;
+            if(this.count == 0){
+              this.count = 1;
+              this.countLis.push(this.count)
+              return
+            }
+            this.count = 0
             this.countLis.push(this.count)
+            return
 					}
 				}
 			})
